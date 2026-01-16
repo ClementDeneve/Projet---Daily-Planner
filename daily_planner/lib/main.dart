@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'timeline/daily_timeline.dart';
 import 'package:daily_planner/todolist/todo_manager.dart';
 import 'todolist/todo_list_page.dart';
+import 'todolist/archive_page.dart';
 import 'todolist/edit_todo_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
@@ -99,6 +100,16 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
+      appBar: AppBar(title: Text(_pageTitles[_selectedIndex]), actions: _selectedIndex == 0 ? [
+        IconButton(
+          tooltip: 'Archive',
+          icon: const Icon(Icons.archive),
+          onPressed: () async {
+            await Navigator.of(context).push(MaterialPageRoute(builder: (_) => ArchivePage(manager: _todoManager)));
+            setState(() {});
+          },
+        )
+      ] : null),
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
