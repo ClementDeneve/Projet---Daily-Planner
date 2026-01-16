@@ -16,7 +16,7 @@ class TodoDb {
   Future<Database> _initDB(String fileName) async {
     final dbPath = await getDatabasesPath();
     final path = p.join(dbPath, fileName);
-    return await openDatabase(path, version: 1, onCreate: _createDB);
+    return await openDatabase(path, version: 2, onCreate: _createDB, onUpgrade: _upgradeDB);
   }
 
   Future _createDB(Database db, int version) async {
@@ -27,10 +27,17 @@ class TodoDb {
         description TEXT,
         deadline INTEGER NOT NULL,
         isCompleted INTEGER NOT NULL,
+        isDailyRecurring INTEGER NOT NULL DEFAULT 0,
         createdAt INTEGER NOT NULL,
         completedAt INTEGER
       )
     ''');
+  }
+
+  Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('ALTER TABLE todos ADD COLUMN isDailyRecurring INTEGER NOT NULL DEFAULT 0');
+    }
   }
 
   Future<void> insertTodo(Todo t) async {

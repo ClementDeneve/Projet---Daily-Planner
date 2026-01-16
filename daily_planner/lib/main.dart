@@ -4,6 +4,7 @@ import 'package:daily_planner/todolist/todo_manager.dart';
 import 'todolist/todo_list_page.dart';
 import 'todolist/archive_page.dart';
 import 'todolist/edit_todo_page.dart';
+import 'profile/profile_page.dart';
 import 'widgets/custom_bottom_navbar.dart';
 
 void main() {
@@ -69,9 +70,9 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   static const List<String> _pageTitles = <String>[
-    'To Do List',
-    'Daily Planner',
-    'Profile',
+    'Liste des tâches',
+    'Plannification journalière',
+    'Profil',
   ];
 
   void _incrementCounter() {
@@ -119,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // Daily timeline (index 1)
           Center(child: DailyTimeline(manager: _todoManager)),
           // Profile (index 2)
-          Center(child: Text('Profile', style: Theme.of(context).textTheme.headlineMedium)),
+          ProfilePage(manager: _todoManager),
         ],
       ),
     ),
@@ -130,11 +131,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (_) => const EditTodoPage()),
                 );
                 if (result != null) {
-                  await _todoManager.addTodo(
-                    title: result['title'] as String,
-                    description: result['description'] as String?,
-                    deadline: result['deadline'] as DateTime,
-                  );
+                    await _todoManager.addTodo(
+                      title: result['title'] as String,
+                      description: result['description'] as String?,
+                      deadline: result['deadline'] as DateTime,
+                      isDailyRecurring: result['isDailyRecurring'] as bool? ?? false,
+                    );
                   setState(() {});
                 }
               },

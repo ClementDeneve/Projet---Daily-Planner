@@ -41,13 +41,14 @@ class TodoManager {
   }
 
   // Add a new todo. Generates a simple id if none provided.
-  Future<Todo> addTodo({required String title, String? description, required DateTime deadline, String? id}) async {
+  Future<Todo> addTodo({required String title, String? description, required DateTime deadline, String? id, bool isDailyRecurring = false}) async {
     final newId = id ?? DateTime.now().microsecondsSinceEpoch.toString();
     final todo = Todo(
       id: newId,
       title: title,
       description: description,
       deadline: deadline,
+      isDailyRecurring: isDailyRecurring,
     );
     _todos.add(todo);
     await TodoDb.instance.insertTodo(todo);
@@ -76,8 +77,21 @@ class TodoManager {
   Future<bool> markCompleted(String id) async {
     final idx = _todos.indexWhere((t) => t.id == id);
     if (idx == -1) return false;
-    final t = _todos.removeAt(idx);
-    final completed = t.copyWith(isCompleted: true, completedAt: DateTime.now());
+    final t = _todos[idx];
+    // If recurring daily, reschedule for next day instead of archiving
+    if (t.isDailyRecurring) {
+      final next = t.copyWith(
+        deadline: t.deadline.add(const Duration(days: 1)),
+        isCompleted: false,
+        completedAt: null,
+      );
+      _todos[idx] = next;
+      await TodoDb.instance.updateTodo(next);
+      return true;
+    }
+    // Non-recurring: archive as before
+    final removed = _todos.removeAt(idx);
+    final completed = removed.copyWith(isCompleted: true, completedAt: DateTime.now());
     _archive.add(completed);
     await TodoDb.instance.updateTodo(completed);
     return true;

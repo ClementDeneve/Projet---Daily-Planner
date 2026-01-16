@@ -14,6 +14,7 @@ class _EditTodoPageState extends State<EditTodoPage> {
   late TextEditingController _descController;
   late DateTime _deadline;
   late bool _isCompleted;
+  late bool _isDailyRecurring;
   DateTime? _completedAt;
 
   @override
@@ -24,6 +25,7 @@ class _EditTodoPageState extends State<EditTodoPage> {
     _descController = TextEditingController(text: todo?.description ?? '');
     _deadline = todo?.deadline ?? DateTime.now().add(const Duration(hours: 1));
     _isCompleted = todo?.isCompleted ?? false;
+    _isDailyRecurring = todo?.isDailyRecurring ?? false;
     _completedAt = todo?.completedAt;
   }
 
@@ -102,6 +104,12 @@ class _EditTodoPageState extends State<EditTodoPage> {
               value: _isCompleted,
               onChanged: _toggleCompleted,
             ),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Récurrente (quotidienne)'),
+              value: _isDailyRecurring,
+              onChanged: (v) => setState(() => _isDailyRecurring = v),
+            ),
             if (_completedAt != null)
               Align(
                 alignment: Alignment.centerLeft,
@@ -123,6 +131,7 @@ class _EditTodoPageState extends State<EditTodoPage> {
                       'deadline': _deadline,
                       'isCompleted': _isCompleted,
                       'completedAt': _completedAt,
+                      'isDailyRecurring': _isDailyRecurring,
                     };
                     if (isEditing) result['id'] = widget.todo!.id;
                     Navigator.of(context).pop(result);

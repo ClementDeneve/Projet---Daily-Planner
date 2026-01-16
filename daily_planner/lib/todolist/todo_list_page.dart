@@ -11,7 +11,97 @@ class TodoListPage extends StatefulWidget {
   State<TodoListPage> createState() => _TodoListPageState();
 }
 
-class _TodoListPageState extends State<TodoListPage> {
+class _TodoListItem extends StatefulWidget {
+  final Todo todo;
+  final TodoManager manager;
+  final AnimationController spinController;
+  final VoidCallback onChanged;
+  const _TodoListItem({required this.todo, required this.manager, required this.spinController, required this.onChanged});
+
+  @override
+  State<_TodoListItem> createState() => _TodoListItemState();
+}
+
+class _TodoListItemState extends State<_TodoListItem> with SingleTickerProviderStateMixin {
+  bool _animating = false;
+
+  Future<void> _handleCheck() async {
+    if (_animating) return;
+    setState(() => _animating = true);
+    // brief fade-out
+    await Future.delayed(const Duration(milliseconds: 250));
+    final ok = await widget.manager.markCompleted(widget.todo.id);
+    // trigger parent refresh
+    widget.onChanged();
+    if (!ok) {
+      // if failed, reset animation state
+      setState(() => _animating = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 250),
+      opacity: _animating ? 0.0 : 1.0,
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.symmetric(vertical: 4.0),
+        child: ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          leading: Checkbox(
+            value: widget.todo.isCompleted,
+            onChanged: (v) async {
+              if (v == true) await _handleCheck();
+            },
+          ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.todo.title,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ),
+              if (widget.todo.isDailyRecurring)
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: AnimatedBuilder(
+                    animation: widget.spinController,
+                    builder: (context, child) => Transform.rotate(
+                      angle: widget.spinController.value * 2 * 3.1415926535,
+                      child: child,
+                    ),
+                    child: const Icon(Icons.autorenew, size: 16.0, color: Colors.blueAccent),
+                  ),
+                ),
+            ],
+          ),
+          onTap: () async {
+            final updated = await Navigator.of(context).push<Map<String, dynamic>?>(
+              MaterialPageRoute(
+                builder: (_) => EditTodoPage(todo: widget.todo),
+              ),
+            );
+            if (updated != null && updated.containsKey('id')) {
+              final newTodo = widget.todo.copyWith(
+                title: updated['title'] as String?,
+                description: updated['description'] as String?,
+                deadline: updated['deadline'] as DateTime?,
+                isDailyRecurring: updated['isDailyRecurring'] as bool? ?? widget.todo.isDailyRecurring,
+              );
+              final ok = await widget.manager.updateTodo(newTodo);
+              if (ok) widget.onChanged();
+            }
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _TodoListPageState extends State<TodoListPage> with SingleTickerProviderStateMixin {
   String _shortDate(DateTime dt) {
     final two = (int n) => n.toString().padLeft(2, '0');
     return '${two(dt.day)}/${two(dt.month)}/${dt.year}';
@@ -46,6 +136,18 @@ class _TodoListPageState extends State<TodoListPage> {
   }
   // Track collapsed state per bucket label
   final Map<String, bool> _collapsed = {};
+  late final AnimationController _spinController;
+  @override
+  void initState() {
+    super.initState();
+    _spinController = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _spinController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     final active = widget.manager.getActiveTodos();
@@ -78,13 +180,13 @@ class _TodoListPageState extends State<TodoListPage> {
                           contentPadding: EdgeInsets.zero,
                           title: Text(label, style: Theme.of(context).textTheme.titleMedium),
                           trailing: IconButton(
-                            icon: Icon(_collapsed[label]! ? Icons.expand_more : Icons.expand_less),
-                            onPressed: () => setState(() => _collapsed[label] = !_collapsed[label]!),
+                            icon: Icon((_collapsed[label] ?? false) ? Icons.expand_more : Icons.expand_less),
+                            onPressed: () => setState(() => _collapsed[label] = !(_collapsed[label] ?? false)),
                           ),
-                          onTap: () => setState(() => _collapsed[label] = !_collapsed[label]!),
+                          onTap: () => setState(() => _collapsed[label] = !(_collapsed[label] ?? false)),
                         ),
                       );
-                      if (!_collapsed[label]!) {
+                      if (!(_collapsed[label] ?? false)) {
                         widgets.addAll(items.map((t) {
                           return Dismissible(
                             key: ValueKey('act-${t.id}'),
@@ -99,47 +201,14 @@ class _TodoListPageState extends State<TodoListPage> {
                               final removed = await widget.manager.removeTodoById(t.id);
                               if (removed) setState(() {});
                             },
-                            child: Card(
-                              elevation: 0,
-                              margin: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: ListTile(
-                                dense: true,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                leading: Checkbox(
-                                  value: t.isCompleted,
-                                  onChanged: (v) async {
-                                    if (v == true) {
-                                      final ok = await widget.manager.markCompleted(t.id);
-                                      if (ok) setState(() {});
-                                    }
-                                  },
-                                ),
-                                title: Text(
-                                  t.title,
-                                  style: Theme.of(context).textTheme.bodyLarge,
-                                ),
-                                onTap: () async {
-                                  final updated = await Navigator.of(context).push<Map<String, dynamic>?>(
-                                    MaterialPageRoute(
-                                      builder: (_) => EditTodoPage(todo: t),
-                                    ),
-                                  );
-                                  if (updated != null) {
-                                    if (updated.containsKey('id')) {
-                                      final newTodo = t.copyWith(
-                                        title: updated['title'] as String?,
-                                        description: updated['description'] as String?,
-                                        deadline: updated['deadline'] as DateTime?,
-                                      );
-                                      final ok = await widget.manager.updateTodo(newTodo);
-                                      if (ok) setState(() {});
-                                    }
-                                  }
-                                },
-                              ),
+                            child: _TodoListItem(
+                              todo: t,
+                              manager: widget.manager,
+                              spinController: _spinController,
+                              onChanged: () => setState(() {}),
                             ),
                           );
-                        }));
+                        }).toList());
                       }
                     }
                     return widgets;

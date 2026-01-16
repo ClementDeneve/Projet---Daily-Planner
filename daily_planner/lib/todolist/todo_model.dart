@@ -6,6 +6,7 @@ class Todo {
   String? description;
   DateTime deadline;
   bool isCompleted;
+  bool isDailyRecurring;
   final DateTime createdAt;
   DateTime? completedAt;
 
@@ -15,6 +16,7 @@ class Todo {
     this.description,
     required this.deadline,
     this.isCompleted = false,
+    this.isDailyRecurring = false,
     DateTime? createdAt,
     this.completedAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -25,6 +27,7 @@ class Todo {
     String? description,
     DateTime? deadline,
     bool? isCompleted,
+    bool? isDailyRecurring,
     DateTime? createdAt,
     DateTime? completedAt,
   }) {
@@ -34,6 +37,7 @@ class Todo {
       description: description ?? this.description,
       deadline: deadline ?? this.deadline,
       isCompleted: isCompleted ?? this.isCompleted,
+      isDailyRecurring: isDailyRecurring ?? this.isDailyRecurring,
       createdAt: createdAt ?? this.createdAt,
       completedAt: completedAt ?? this.completedAt,
     );
@@ -46,6 +50,7 @@ class Todo {
       'description': description,
       'deadline': deadline.millisecondsSinceEpoch,
       'isCompleted': isCompleted ? 1 : 0,
+      'isDailyRecurring': isDailyRecurring ? 1 : 0,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'completedAt': completedAt?.millisecondsSinceEpoch,
     };
@@ -58,6 +63,7 @@ class Todo {
       description: map['description'] as String?,
       deadline: DateTime.fromMillisecondsSinceEpoch(map['deadline'] as int),
       isCompleted: (map['isCompleted'] as int) == 1,
+      isDailyRecurring: (map['isDailyRecurring'] as int?) == 1,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
       completedAt: map['completedAt'] == null ? null : DateTime.fromMillisecondsSinceEpoch(map['completedAt'] as int),
     );

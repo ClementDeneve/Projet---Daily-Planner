@@ -77,6 +77,7 @@ class _ArchivePageState extends State<ArchivePage> {
                                 description: updated['description'] as String?,
                                 deadline: updated['deadline'] as DateTime?,
                                 isCompleted: updated['isCompleted'] as bool? ?? true,
+                                isDailyRecurring: updated['isDailyRecurring'] as bool? ?? t.isDailyRecurring,
                                 completedAt: updated['completedAt'] as DateTime?,
                               );
                               final ok = await widget.manager.updateTodo(newTodo);
