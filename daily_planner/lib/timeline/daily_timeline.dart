@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:daily_planner/todolist/todo_manager.dart';
+import 'package:daily_planner/todolist/todo_model.dart';
 
 class DailyTimeline extends StatefulWidget {
   final TodoManager manager;
@@ -48,8 +49,8 @@ class _DailyTimelineState extends State<DailyTimeline> {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                          widget.manager.markCompleted(t.id);
-                          setState(() {});
+                          final ok = await widget.manager.markCompleted(t.id);
+                          if (ok) setState(() {});
                         },
                         child: Container(
                           width: 12,
@@ -92,10 +93,10 @@ class _DailyTimelineState extends State<DailyTimeline> {
                               ),
                             ),
                             IconButton(
-                              onPressed: () {
-                                widget.manager.markCompleted(t.id);
-                                setState(() {});
-                              },
+                              onPressed: () async {
+                                  final ok = await widget.manager.markCompleted(t.id);
+                                  if (ok) setState(() {});
+                                },
                               icon: const Icon(Icons.check_circle_outline),
                               color: Colors.green,
                               tooltip: 'Marquer comme fait',

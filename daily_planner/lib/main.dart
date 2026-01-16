@@ -51,15 +51,20 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // Sample todos for the timeline
-    final now = DateTime.now();
-    _todoManager.addTodo(title: 'Réveil', deadline: DateTime(now.year, now.month, now.day, 7, 0));
-    _todoManager.addTodo(title: 'Aller au travail', deadline: DateTime(now.year, now.month, now.day, 8, 30));
-    _todoManager.addTodo(title: 'Stand-up', description: 'Réunion quotidienne', deadline: DateTime(now.year, now.month, now.day, 9, 0));
-    _todoManager.addTodo(title: 'Déjeuner', deadline: DateTime(now.year, now.month, now.day, 12, 30));
-    _todoManager.addTodo(title: 'Focus projet', deadline: DateTime(now.year, now.month, now.day, 15, 0));
-    _todoManager.addTodo(title: 'Sport', deadline: DateTime(now.year, now.month, now.day, 18, 0));
-    _todoManager.addTodo(title: 'Dîner', deadline: DateTime(now.year, now.month, now.day, 20, 0));
+    // Initialize DB and add sample todos if DB empty
+    _todoManager.init().then((_) async {
+      final now = DateTime.now();
+      if (_todoManager.getActiveTodos().isEmpty) {
+        await _todoManager.addTodo(title: 'Réveil', deadline: DateTime(now.year, now.month, now.day, 7, 0));
+        await _todoManager.addTodo(title: 'Aller au travail', deadline: DateTime(now.year, now.month, now.day, 8, 30));
+        await _todoManager.addTodo(title: 'Stand-up', description: 'Réunion quotidienne', deadline: DateTime(now.year, now.month, now.day, 9, 0));
+        await _todoManager.addTodo(title: 'Déjeuner', deadline: DateTime(now.year, now.month, now.day, 12, 30));
+        await _todoManager.addTodo(title: 'Focus projet', deadline: DateTime(now.year, now.month, now.day, 15, 0));
+        await _todoManager.addTodo(title: 'Sport', deadline: DateTime(now.year, now.month, now.day, 18, 0));
+        await _todoManager.addTodo(title: 'Dîner', deadline: DateTime(now.year, now.month, now.day, 20, 0));
+        setState(() {});
+      }
+    });
   }
 
   static const List<String> _pageTitles = <String>[
@@ -114,13 +119,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   MaterialPageRoute(builder: (_) => const EditTodoPage()),
                 );
                 if (result != null) {
-                  setState(() {
-                    _todoManager.addTodo(
-                      title: result['title'] as String,
-                      description: result['description'] as String?,
-                      deadline: result['deadline'] as DateTime,
-                    );
-                  });
+                  await _todoManager.addTodo(
+                    title: result['title'] as String,
+                    description: result['description'] as String?,
+                    deadline: result['deadline'] as DateTime,
+                  );
+                  setState(() {});
                 }
               },
               tooltip: 'Add Todo',

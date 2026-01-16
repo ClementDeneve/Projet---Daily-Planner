@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:daily_planner/todolist/todo_manager.dart';
+import 'package:daily_planner/todolist/todo_model.dart';
 
 class EditTodoPage extends StatefulWidget {
   final Todo? todo;

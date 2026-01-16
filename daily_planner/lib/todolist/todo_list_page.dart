@@ -39,10 +39,9 @@ class _TodoListPageState extends State<TodoListPage> {
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
                         direction: DismissDirection.endToStart,
-                        onDismissed: (_) {
-                          setState(() {
-                            widget.manager.removeTodoById(t.id);
-                          });
+                        onDismissed: (_) async {
+                          final removed = await widget.manager.removeTodoById(t.id);
+                          if (removed) setState(() {});
                         },
                         child: Card(
                           elevation: 0,
@@ -52,11 +51,10 @@ class _TodoListPageState extends State<TodoListPage> {
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                             leading: Checkbox(
                               value: t.isCompleted,
-                              onChanged: (v) {
+                              onChanged: (v) async {
                                 if (v == true) {
-                                  setState(() {
-                                    widget.manager.markCompleted(t.id);
-                                  });
+                                  final ok = await widget.manager.markCompleted(t.id);
+                                  if (ok) setState(() {});
                                 }
                               },
                             ),
@@ -71,16 +69,15 @@ class _TodoListPageState extends State<TodoListPage> {
                                 ),
                               );
                               if (updated != null) {
-                                setState(() {
-                                  if (updated.containsKey('id')) {
-                                    final newTodo = t.copyWith(
-                                      title: updated['title'] as String?,
-                                      description: updated['description'] as String?,
-                                      deadline: updated['deadline'] as DateTime?,
-                                    );
-                                    widget.manager.updateTodo(newTodo);
-                                  }
-                                });
+                                if (updated.containsKey('id')) {
+                                  final newTodo = t.copyWith(
+                                    title: updated['title'] as String?,
+                                    description: updated['description'] as String?,
+                                    deadline: updated['deadline'] as DateTime?,
+                                  );
+                                  final ok = await widget.manager.updateTodo(newTodo);
+                                  if (ok) setState(() {});
+                                }
                               }
                             },
                           ),
