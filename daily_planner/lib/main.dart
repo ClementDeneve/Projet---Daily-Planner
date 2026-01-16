@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'daily_timeline.dart';
 import 'todo_manager.dart';
+import 'todolist/todo_list_page.dart';
+import 'todolist/edit_todo_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -96,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
           index: _selectedIndex,
           children: <Widget>[
           // To Do List (index 0)
-          _buildTodoList(),
+          TodoListPage(manager: _todoManager),
           // Daily timeline (index 1)
           Center(child: DailyTimeline(manager: _todoManager)),
           // Profile (index 2)
@@ -106,7 +108,20 @@ class _MyHomePageState extends State<MyHomePage> {
     ),
       floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
-              onPressed: _showAddTodoDialog,
+              onPressed: () async {
+                final result = await Navigator.of(context).push<Map<String, dynamic>?>(
+                  MaterialPageRoute(builder: (_) => const EditTodoPage()),
+                );
+                if (result != null) {
+                  setState(() {
+                    _todoManager.addTodo(
+                      title: result['title'] as String,
+                      description: result['description'] as String?,
+                      deadline: result['deadline'] as DateTime,
+                    );
+                  });
+                }
+              },
               tooltip: 'Add Todo',
               child: const Icon(Icons.add),
             )
@@ -168,106 +183,5 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildTodoList() {
-    final todos = _todoManager.getActiveTodos();
-    return Padding(
-      padding: const EdgeInsets.all(12.0),
-      child: Column(
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text('To Do', style: Theme.of(context).textTheme.headlineMedium),
-          ),
-          const SizedBox(height: 12.0),
-          Expanded(
-            child: todos.isEmpty
-                ? Center(child: Text('Aucun todo actif', style: Theme.of(context).textTheme.bodyLarge))
-                : ListView.builder(
-                    itemCount: todos.length,
-                    itemBuilder: (context, index) {
-                      final t = todos[index];
-                      final time = '${t.deadline.hour.toString().padLeft(2, '0')}:${t.deadline.minute.toString().padLeft(2, '0')} ${t.deadline.day}/${t.deadline.month}';
-                      return Dismissible(
-                        key: ValueKey(t.id),
-                        background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20.0), child: const Icon(Icons.delete, color: Colors.white)),
-                        direction: DismissDirection.endToStart,
-                        onDismissed: (_) {
-                          setState(() {
-                            _todoManager.removeTodoById(t.id);
-                          });
-                        },
-                        child: Card(
-                          child: ListTile(
-                            leading: Checkbox(
-                              value: t.isCompleted,
-                              onChanged: (v) {
-                                if (v == true) {
-                                  setState(() {
-                                    _todoManager.markCompleted(t.id);
-                                  });
-                                }
-                              },
-                            ),
-                            title: Text(t.title),
-                            subtitle: Text(time + (t.description != null ? ' · ${t.description}' : '')),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.delete_outline),
-                              onPressed: () {
-                                setState(() {
-                                  _todoManager.removeTodoById(t.id);
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showAddTodoDialog() async {
-    String title = '';
-    String? description;
-    await showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Ajouter un todo'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                autofocus: true,
-                decoration: const InputDecoration(labelText: 'Titre'),
-                onChanged: (v) => title = v,
-              ),
-              TextField(
-                decoration: const InputDecoration(labelText: 'Description (optionnelle)'),
-                onChanged: (v) => description = v,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
-            ElevatedButton(
-              onPressed: () {
-                final t = title.trim();
-                if (t.isNotEmpty) {
-                  setState(() {
-                    _todoManager.addTodo(title: t, description: description, deadline: DateTime.now().add(const Duration(hours: 1)));
-                  });
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('Ajouter'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  
 }
