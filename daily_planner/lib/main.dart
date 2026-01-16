@@ -91,10 +91,6 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(_pageTitles[_selectedIndex]),
-      ),
       body: SafeArea(
         child: IndexedStack(
           index: _selectedIndex,
