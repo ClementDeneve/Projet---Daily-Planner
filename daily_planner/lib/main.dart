@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'daily_timeline.dart';
-import 'todo_manager.dart';
+import 'timeline/daily_timeline.dart';
+import 'package:daily_planner/todolist/todo_manager.dart';
 import 'todolist/todo_list_page.dart';
 import 'todolist/edit_todo_page.dart';
 import 'widgets/custom_bottom_navbar.dart';

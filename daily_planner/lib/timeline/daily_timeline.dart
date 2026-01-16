@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'todo_manager.dart';
+import 'package:daily_planner/todolist/todo_manager.dart';
 
 class DailyTimeline extends StatefulWidget {
   final TodoManager manager;

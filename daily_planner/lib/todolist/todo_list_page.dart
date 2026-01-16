@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../todo_manager.dart';
+import 'package:daily_planner/todolist/todo_manager.dart';
 import 'edit_todo_page.dart';
 
 class TodoListPage extends StatefulWidget {
@@ -30,14 +30,14 @@ class _TodoListPageState extends State<TodoListPage> {
                     itemCount: todos.length,
                     itemBuilder: (context, index) {
                       final t = todos[index];
-                      final time = '${t.deadline.hour.toString().padLeft(2, '0')}:${t.deadline.minute.toString().padLeft(2, '0')} ${t.deadline.day}/${t.deadline.month}';
                       return Dismissible(
                         key: ValueKey(t.id),
                         background: Container(
-                            color: Colors.redAccent,
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.only(right: 20.0),
-                            child: const Icon(Icons.delete, color: Colors.white)),
+                          color: Colors.redAccent,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 20.0),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
                         direction: DismissDirection.endToStart,
                         onDismissed: (_) {
                           setState(() {
@@ -45,7 +45,11 @@ class _TodoListPageState extends State<TodoListPage> {
                           });
                         },
                         child: Card(
+                          elevation: 0,
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
                           child: ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                             leading: Checkbox(
                               value: t.isCompleted,
                               onChanged: (v) {
@@ -56,43 +60,29 @@ class _TodoListPageState extends State<TodoListPage> {
                                 }
                               },
                             ),
-                            title: Text(t.title),
-                            subtitle: Text(time + (t.description != null ? ' · ${t.description}' : '')),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined),
-                                  onPressed: () async {
-                                    final updated = await Navigator.of(context).push<Map<String, dynamic>?>(
-                                      MaterialPageRoute(
-                                        builder: (_) => EditTodoPage(todo: t),
-                                      ),
-                                    );
-                                    if (updated != null) {
-                                      setState(() {
-                                        if (updated.containsKey('id')) {
-                                          final newTodo = t.copyWith(
-                                            title: updated['title'] as String?,
-                                            description: updated['description'] as String?,
-                                            deadline: updated['deadline'] as DateTime?,
-                                          );
-                                          widget.manager.updateTodo(newTodo);
-                                        }
-                                      });
-                                    }
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () {
-                                    setState(() {
-                                      widget.manager.removeTodoById(t.id);
-                                    });
-                                  },
-                                ),
-                              ],
+                            title: Text(
+                              t.title,
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
+                            onTap: () async {
+                              final updated = await Navigator.of(context).push<Map<String, dynamic>?>(
+                                MaterialPageRoute(
+                                  builder: (_) => EditTodoPage(todo: t),
+                                ),
+                              );
+                              if (updated != null) {
+                                setState(() {
+                                  if (updated.containsKey('id')) {
+                                    final newTodo = t.copyWith(
+                                      title: updated['title'] as String?,
+                                      description: updated['description'] as String?,
+                                      deadline: updated['deadline'] as DateTime?,
+                                    );
+                                    widget.manager.updateTodo(newTodo);
+                                  }
+                                });
+                              }
+                            },
                           ),
                         ),
                       );
