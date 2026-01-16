@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'daily_timeline.dart';
+import 'todo_manager.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,26 +13,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+      title: 'Daily Planner',
+      theme: ThemeData.dark().copyWith(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Daily Planner'),
     );
   }
 }
@@ -57,6 +43,21 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
   int _selectedIndex = 1;
+  final TodoManager _todoManager = TodoManager();
+
+  @override
+  void initState() {
+    super.initState();
+    // Sample todos for the timeline
+    final now = DateTime.now();
+    _todoManager.addTodo(title: 'Réveil', deadline: DateTime(now.year, now.month, now.day, 7, 0));
+    _todoManager.addTodo(title: 'Aller au travail', deadline: DateTime(now.year, now.month, now.day, 8, 30));
+    _todoManager.addTodo(title: 'Stand-up', description: 'Réunion quotidienne', deadline: DateTime(now.year, now.month, now.day, 9, 0));
+    _todoManager.addTodo(title: 'Déjeuner', deadline: DateTime(now.year, now.month, now.day, 12, 30));
+    _todoManager.addTodo(title: 'Focus projet', deadline: DateTime(now.year, now.month, now.day, 15, 0));
+    _todoManager.addTodo(title: 'Sport', deadline: DateTime(now.year, now.month, now.day, 18, 0));
+    _todoManager.addTodo(title: 'Dîner', deadline: DateTime(now.year, now.month, now.day, 20, 0));
+  }
 
   static const List<String> _pageTitles = <String>[
     'To Do List',
@@ -91,29 +92,35 @@ class _MyHomePageState extends State<MyHomePage> {
     // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
         title: Text(_pageTitles[_selectedIndex]),
       ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: <Widget>[
-          Center(child: Text('To Do List', style: Theme.of(context).textTheme.headlineMedium)),
-          Center(child: DailyTimeline()),
+      body: SafeArea(
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: <Widget>[
+          // To Do List (index 0)
+          _buildTodoList(),
+          // Daily timeline (index 1)
+          Center(child: DailyTimeline(manager: _todoManager)),
+          // Profile (index 2)
           Center(child: Text('Profile', style: Theme.of(context).textTheme.headlineMedium)),
         ],
       ),
-      floatingActionButton: _selectedIndex == 1
+    ),
+      floatingActionButton: _selectedIndex == 0
           ? FloatingActionButton(
-              onPressed: _incrementCounter,
-              tooltip: 'Increment',
+              onPressed: _showAddTodoDialog,
+              tooltip: 'Add Todo',
               child: const Icon(Icons.add),
             )
-          : null,
+          : _selectedIndex == 1
+              ? FloatingActionButton(
+                  onPressed: _incrementCounter,
+                  tooltip: 'Increment',
+                  child: const Icon(Icons.add),
+                )
+              : null,
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         child: ClipRRect(
@@ -162,6 +169,109 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildTodoList() {
+    final todos = _todoManager.getActiveTodos();
+    return Padding(
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('To Do', style: Theme.of(context).textTheme.headlineMedium),
+          ),
+          const SizedBox(height: 12.0),
+          Expanded(
+            child: todos.isEmpty
+                ? Center(child: Text('Aucun todo actif', style: Theme.of(context).textTheme.bodyLarge))
+                : ListView.builder(
+                    itemCount: todos.length,
+                    itemBuilder: (context, index) {
+                      final t = todos[index];
+                      final time = '${t.deadline.hour.toString().padLeft(2, '0')}:${t.deadline.minute.toString().padLeft(2, '0')} ${t.deadline.day}/${t.deadline.month}';
+                      return Dismissible(
+                        key: ValueKey(t.id),
+                        background: Container(color: Colors.redAccent, alignment: Alignment.centerRight, padding: const EdgeInsets.only(right: 20.0), child: const Icon(Icons.delete, color: Colors.white)),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) {
+                          setState(() {
+                            _todoManager.removeTodoById(t.id);
+                          });
+                        },
+                        child: Card(
+                          child: ListTile(
+                            leading: Checkbox(
+                              value: t.isCompleted,
+                              onChanged: (v) {
+                                if (v == true) {
+                                  setState(() {
+                                    _todoManager.markCompleted(t.id);
+                                  });
+                                }
+                              },
+                            ),
+                            title: Text(t.title),
+                            subtitle: Text(time + (t.description != null ? ' · ${t.description}' : '')),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              onPressed: () {
+                                setState(() {
+                                  _todoManager.removeTodoById(t.id);
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _showAddTodoDialog() async {
+    String title = '';
+    String? description;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Ajouter un todo'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                autofocus: true,
+                decoration: const InputDecoration(labelText: 'Titre'),
+                onChanged: (v) => title = v,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Description (optionnelle)'),
+                onChanged: (v) => description = v,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Annuler')),
+            ElevatedButton(
+              onPressed: () {
+                final t = title.trim();
+                if (t.isNotEmpty) {
+                  setState(() {
+                    _todoManager.addTodo(title: t, description: description, deadline: DateTime.now().add(const Duration(hours: 1)));
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Ajouter'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
