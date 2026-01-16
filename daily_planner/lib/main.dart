@@ -3,6 +3,7 @@ import 'daily_timeline.dart';
 import 'todo_manager.dart';
 import 'todolist/todo_list_page.dart';
 import 'todolist/edit_todo_page.dart';
+import 'widgets/custom_bottom_navbar.dart';
 
 void main() {
   runApp(const MyApp());
@@ -132,53 +133,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: const Icon(Icons.add),
                 )
               : null,
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10.0,
-                  offset: Offset(0, 4),
-                ),
-              ],
-            ),
-            child: BottomNavigationBar(
-              backgroundColor: Colors.transparent,
-              elevation: 0,
-              type: BottomNavigationBarType.fixed,
-              items: const <BottomNavigationBarItem>[
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.list_outlined),
-                  activeIcon: Icon(Icons.list),
-                  label: 'To Do',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.calendar_today_outlined),
-                  activeIcon: Icon(Icons.calendar_today),
-                  label: 'Daily',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.person_outline),
-                  activeIcon: Icon(Icons.person),
-                  label: 'Profile',
-                ),
-              ],
-              currentIndex: _selectedIndex,
-              selectedItemColor: Theme.of(context).colorScheme.primary,
-              unselectedItemColor: Colors.grey.shade600,
-              showUnselectedLabels: true,
-              selectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w400),
-              iconSize: 24.0,
-              onTap: _onItemTapped,
-            ),
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
